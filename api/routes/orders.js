@@ -1,34 +1,125 @@
 const router = require("express").Router();
+const { json } = require("express");
+const mongoose = require("mongoose");
+
+const Order = require("../models/order");
+const Product = require("../models/product");
 
 router.get("/", (req, res) => {
-  res.status(200).json({
-    message: "orders git route",
-  });
+  Order.find()
+    .populate("product", "name price")
+    .exec()
+    .then((docs) => {
+      res.status(200).json({
+        count: docs.length,
+        orders: docs.map((doc) => {
+          return {
+            _id: doc._id,
+            product: doc.product,
+            quantity: doc.quantity,
+            request: {
+              type: "GET",
+              url: "http://localhost:8080/orders/" + doc._id,
+            },
+          };
+        }),
+      });
+    })
+    .catch((err) => {
+      res.status(500).json({
+        error: err,
+      });
+    });
+});
+
+router.get("/:orderId", (req, res) => {
+  Order.findById(req.params.orderId)
+    .select("product quantity")
+    .populate("product", "name price")
+    .exec()
+    .then((order) => {
+      if (order) {
+        res.status(200).json({
+          order: order,
+          request: {
+            type: "GET",
+            url: "http://localhost:8080/orders/" + order._id,
+          },
+        });
+      } else {
+        let err = new Error("Order not found !");
+        err.status = 404;
+        throw err;
+      }
+    })
+    .catch((err) => {
+      res.status(err.status || 500).json({
+        error: err.message,
+      });
+    });
 });
 
 router.post("/", (req, res) => {
-  const order = {
-    orderId: req.body.orderId,
-    quantity: req.body.quantity,
-  };
-  res.status(201).json({
-    message: "order post route",
-    order: order,
-  });
-});
+  Product.findById(req.body.productId)
+    .exec()
+    .then((product) => {
+      if (!product) {
+        // error handleing
+        let err = new Error("Product not found");
+        err.status = 404;
+        throw err;
+      }
 
-router.patch("/:orderId", (req, res) => {
-  res.status(200).json({
-    message: "order patch route",
-    productId: req.params.orderId,
-  });
+      const order = new Order({
+        _id: mongoose.Types.ObjectId(),
+        product: req.body.productId,
+        quantity: req.body.quantity,
+      });
+      return order.save();
+    })
+    .then((result) => {
+      res.status(201).json({
+        message: "Order stored",
+        createdOrder: {
+          _id: result._id,
+          product: result.product,
+          quantity: result.quantity,
+        },
+        request: {
+          type: "GET",
+          url: "http://localhost:8080/orders/" + result._id,
+        },
+      });
+    })
+    .catch((err) => {
+      res.status(err.status || 500).json({
+        error: err.message,
+      });
+    });
 });
 
 router.delete("/:orderId", (req, res) => {
-  res.status(200).json({
-    message: "order delet route",
-    productId: req.params.orderId,
-  });
+  Order.deleteOne({ _id: req.params.orderId })
+    .exec()
+    .then((result) => {
+      if (result.deletedCount) {
+        res.status(200).json({
+          message: "Order deleted",
+          request: {
+            type: "POST",
+            url: "http://localhost:8080/orders/",
+            body: { productId: "ID", quantity: "Number" },
+          },
+        });
+      } else {
+        let err = new Error("Order not found");
+        err.status = 404;
+        throw err;
+      }
+    })
+    .catch((err) => {
+      res.status(err.status || 500).json({ error: err.message });
+    });
 });
 
 module.exports = router;
