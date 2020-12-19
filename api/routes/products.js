@@ -1,134 +1,17 @@
 const router = require("express").Router();
-const mongoose = require("mongoose");
-const Product = require("../models/product");
+
+const checkAuth = require("../middleware/check_auth");
+
+const productController = require("../controllers/products");
 // Handle incoming GET requests to  /products
-router.get("/", (req, res) => {
-  Product.find()
-    .select("_id name price")
-    .exec()
-    .then((docs) => {
-      const response = {
-        count: docs.length,
-        products: docs.map((doc) => {
-          return {
-            _id: doc._id,
-            name: doc.name,
-            price: doc.price,
-            request: {
-              type: "GET",
-              url: "http://localhost:8080/products/" + doc._id,
-            },
-          };
-        }),
-      };
+router.get("/", productController.getAll);
 
-      res.status(200).json(response);
-    })
-    .catch((err) => {
-      res.status(500).json({
-        error: err,
-      });
-    });
-});
+router.get("/:productId", productController.getOne);
 
-router.get("/:productId", (req, res) => {
-  const id = req.params.productId;
-  Product.findById({ _id: id })
-    .select("_id name price")
-    .exec()
-    .then((doc) => {
-      if (doc) {
-        res.status(200).json({
-          product: doc,
-          request: {
-            type: "GET",
-            url: "http://localhost:8080/products/" + doc._id,
-          },
-        });
-      } else {
-        res
-          .status(404)
-          .json({ message: "No valid entry found for provided ID" });
-      }
-    })
-    .catch((err) => {
-      res.status(500).json({ error: err });
-    });
-});
+router.post("/", checkAuth, productController.createProduct);
 
-router.post("/", (req, res) => {
-  const product = new Product({
-    _id: new mongoose.Types.ObjectId(),
-    name: req.body.name,
-    price: req.body.price,
-  });
+router.patch("/:productId", checkAuth, productController.updateProduct);
 
-  product
-    .save()
-    .then((result) => {
-      res.status(201).json({
-        message: "Created product successfully",
-        createProduct: {
-          _id: result._id,
-          name: result.name,
-          price: result.price,
-          request: {
-            type: "GET",
-            url: "http://localhost:8080/products/" + result._id,
-          },
-        },
-      });
-    })
-    .catch((err) => {
-      res.status(500).json({
-        error: err,
-      });
-    });
-});
-
-router.patch("/:productId", (req, res) => {
-  const id = req.params.productId;
-  const updateOps = {};
-  for (const ops of req.body) {
-    updateOps[ops.propName] = ops.value;
-  }
-  Product.update({ _id: id }, { $set: updateOps })
-    .exec()
-    .then((result) => {
-      res.status(200).json({
-        message: "product updated",
-        request: {
-          type: "GET",
-          url: "http://localhost:8080/products/" + id,
-        },
-      });
-    })
-    .catch((err) => {
-      res.status(500).json({
-        error: err,
-      });
-    });
-});
-
-router.delete("/:productId", (req, res) => {
-  const id = req.params.productId;
-  Product.remove({ _id: id })
-    .exec()
-    .then((result) => {
-      res.status(200).json({
-        message: "product deleted",
-        request: {
-          type: "POST",
-          url: "http://localhost:8080/products",
-          body: { name: "String", price: "Number" },
-        },
-      });
-    })
-    .catch((err) => {
-      res.status(500).json({
-        error: err,
-      });
-    });
-});
+router.delete("/:productId", checkAuth, productController.deleteProduct);
 
 module.exports = router;

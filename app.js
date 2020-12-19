@@ -5,6 +5,7 @@ const app = express();
 
 const productsRoutes = require("./api/routes/products");
 const orderRoutes = require("./api/routes/orders");
+const userRoutes = require("./api/routes/user");
 const { json } = require("express");
 
 //midlleware
@@ -50,7 +51,7 @@ app.use((req, res, next) => {
 // Routes which handle requests
 app.use("/products", productsRoutes);
 app.use("/orders", orderRoutes);
-
+app.use("/user", userRoutes);
 // error handle
 app.use((req, res, next) => {
   const error = new Error("Not found");
