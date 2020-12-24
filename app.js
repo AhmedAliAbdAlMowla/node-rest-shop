@@ -5,6 +5,7 @@ const core = require("./api/middleware/cores");
 
 const { json } = require("express");
 const error = require("./api/middleware/error");
+const notfound = require("./api/middleware/notFound");
 //midlleware
 app.use(logger("dev"));
 
@@ -26,6 +27,8 @@ require("./api/startup/routes")(app);
 
 // error handler
 app.use(error);
+// not found handler
+app.use(notfound);
 // production
-// require("./api/startup/prod")(app);
+require("./api/startup/prod")(app);
 module.exports = app;
