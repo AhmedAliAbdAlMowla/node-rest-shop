@@ -20,7 +20,7 @@ require("./api/startup/logging")();
 // connect with db
 require("./api/startup/db")();
 // middleware handling   CORS polesy error
-// app.use(core);
+app.use(core);
 
 // Routes which handle requests
 require("./api/startup/routes")(app);

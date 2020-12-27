@@ -6,24 +6,40 @@ const userSchema = mongoose.Schema({
   name: {
     type: String,
     required: true,
-    minlength: 5,
-    maxlength: 50,
+   
   },
   email: {
     type: String,
     required: true,
-    minlength: 5,
-    maxlength: 100,
+   
     unique: true,
   },
   password: {
     type: String,
     required: true,
-    minlength: 5,
-    maxlength: 1024,
+  
   },
-  isAdmin: Boolean,
-  default: false,
+  phone: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  cart: [
+    {
+      _id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "product",
+      },
+    },
+  ],
+  Dcreate: {
+    type: Date,
+    default: Date.now(),
+  },
+  isAdmin: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 userSchema.methods.generateAuthToken = function () {
@@ -47,6 +63,7 @@ const validateUser = (user) => {
       .required()
       .regex(RegExp("^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9]).{8,}$")),
     // regex Minimum eight characters, at least one uppercase letter, one lowercase letter and one number
+    phone: Joi.string().min(11).required(),
   });
   return schema.validate(user);
 };

@@ -33,7 +33,7 @@ module.exports.signup = async (req, res) => {
   if (user)
     return res.status(400).json({ message: "User already reqestered." });
 
-  user = new User(_.pick(req.body, ["name", "email", "password"]));
+  user = new User(_.pick(req.body, ["name", "email", "password", "phone"]));
   const salt = await bcrypt.genSalt(10);
   user.password = await bcrypt.hash(user.password, salt);
   await user.save();
@@ -42,7 +42,7 @@ module.exports.signup = async (req, res) => {
   res
     .status(201)
     .header("x-auth-token", token)
-    .json({ user: _.pick(user, ["_id", "name", "email"]) });
+    .json({ user: _.pick(user, ["_id", "name", "email", "phone"]) });
 };
 
 // login validate

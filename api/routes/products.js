@@ -11,7 +11,7 @@ router.get("/:productId", productController.getOne);
 
 router.post("/", [ auth, admin], productController.createProduct);
 
-router.put("/:productId", [ auth, admin], productController.updateProduct);
+router.patch("/:productId", [ auth, admin], productController.updateProduct);
 
 router.delete("/:productId", [ auth, admin], productController.deleteProduct);
 
