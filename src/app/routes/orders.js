@@ -1,9 +1,8 @@
 const router = require("express").Router();
-const { json } = require("express");
 
-const auth = require("../middleware/auth");
+import auth from "../middleware/auth";
 
-const ordersController = require("../controllers/orders");
+import * as ordersController from "../controllers/orders";
 
 router.get("/", auth, ordersController.getAll);
 
@@ -13,4 +12,6 @@ router.post("/", auth, ordersController.createOrder);
 
 router.delete("/:orderId", auth, ordersController.deleteOrder);
 
-module.exports = router;
+router.patch("/:orderId", auth, ordersController.updateOrder);
+
+export default router;

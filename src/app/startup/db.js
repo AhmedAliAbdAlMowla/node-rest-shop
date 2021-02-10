@@ -1,9 +1,8 @@
-const mongoose = require("mongoose");
-const winston = require("winston");
+import mongoose from "mongoose";
+import winston from "winston";
 
 // db connect
 module.exports = () => {
-
   mongoose
     .connect(process.env.dbUrl, {
       useUnifiedTopology: true,

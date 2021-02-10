@@ -1,6 +1,6 @@
-const winston = require("winston");
-require("express-async-errors"); // for error handeler async
-require("winston-mongodb");
+import winston from "winston";
+import "express-async-errors"; // for error handeler async
+import "winston-mongodb";
 // logging
 module.exports = () => {
   // log ex or info or error in console

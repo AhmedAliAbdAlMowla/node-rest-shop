@@ -1,18 +1,20 @@
-const mongoose = require("mongoose");
-const { User, validateUser } = require("../models/user");
-const _ = require("lodash");
-const { Order, validate } = require("../models/order");
-const { Product, validateProd } = require("../models/product");
+import  User  from "../models/user";
+import _ from "lodash";
+import Order from "../models/order";
+import { validateOrder, validateUpdateOrder } from "../validators/order";
+import  Product  from "../models/product";
 
-exports.getAll = async (req, res) => {
+export const getAll = async (req, res) => {
   const orders = await Order.find().populate("product");
 
   const response = {
     count: orders.length,
     orders: orders.map((doc) => {
       return {
-        order: _.pick(doc, ["_id", "quantity", "shipping"]),
+        _id: doc._id,
+        quantity: doc.quantity,
         product: _.pick(doc.product, ["name", "price", "brand"]),
+        shipping: doc.shipping,
         request: {
           type: "GET",
           url: "http://localhost:8080/api/orders/" + doc._id,
@@ -24,16 +26,16 @@ exports.getAll = async (req, res) => {
   res.status(200).json(response);
 };
 
-exports.getOne = async (req, res) => {
+export const getOne = async (req, res) => {
   const order = await Order.findById(req.params.orderId).populate("product");
 
   if (order) {
     res.status(200).json({
       order: {
         _id: order._id,
+        quantity: order.quantity,
         product: _.pick(order.product, ["name", "price", "brand"]),
         shapping: order.shipping,
-        quantity: order.quantity,
         request: {
           type: "GET",
           url: "http://localhost:8080/api/orders/" + order._id,
@@ -45,8 +47,8 @@ exports.getOne = async (req, res) => {
   }
 };
 
-exports.createOrder = async (req, res) => {
-  const { error } = validate(req.body);
+export const createOrder = async (req, res) => {
+  const { error } = validateOrder(req.body);
 
   if (error) return res.status(400).json({ error: error.details[0].message });
 
@@ -91,7 +93,7 @@ exports.createOrder = async (req, res) => {
   });
 };
 
-exports.deleteOrder = async (req, res) => {
+export const deleteOrder = async (req, res) => {
   const result = await Order.deleteOne({ _id: req.params.orderId });
 
   if (result.deletedCount) {
@@ -118,6 +120,49 @@ exports.deleteOrder = async (req, res) => {
           postalCode: "String",
           country: "String",
         },
+      },
+    });
+  } else {
+    res.status(404).json({ message: "No valid entry found for provided ID" });
+  }
+};
+
+export const updateOrder = async (req, res) => {
+  const updateOps = {};
+
+  let propShapingName = ["address", "city", "postalCode", "country"];
+  let propName = ["quantity"];
+
+  for (const ops of req.body) {
+    let checkValid = {};
+    checkValid[ops.propName] = ops.value;
+    // validate body
+    const { error } = validateUpdateOrder(checkValid);
+    if (error) return res.status(400).json({ error: error.details[0].message });
+
+    if (propName.includes(ops.propName) && ops.value) {
+      updateOps[ops.propName] = ops.value;
+    } else if (propShapingName.includes(ops.propName) && ops.value) {
+      updateOps["shipping." + ops.propName] = ops.value;
+    } else {
+      return res.status(400).json({
+        message: "error in bodyData !!",
+        exampleForBody: " [ { 'propName': 'quantity', 'value': '2'}]",
+      });
+    }
+  }
+
+  const result = await Order.updateOne(
+    { _id: req.params.orderId },
+    { $set: updateOps }
+  );
+
+  if (result.n) {
+    res.status(200).json({
+      message: "order updated",
+      request: {
+        type: "GET",
+        url: "http://localhost:8080/api/orders/" + req.params.orderId,
       },
     });
   } else {

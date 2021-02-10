@@ -1,6 +1,6 @@
-const productsRoutes = require("../routes/products");
-const ordersRoutes = require("../routes/orders");
-const userRoutes = require("../routes/user");
+import productsRoutes from "../routes/products";
+import ordersRoutes from "../routes/orders";
+import userRoutes from "../routes/user";
 
 module.exports = (app) => {
   app.use("/api/user", userRoutes);

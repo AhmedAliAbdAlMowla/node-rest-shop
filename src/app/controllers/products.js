@@ -1,7 +1,8 @@
-const { Product, validate } = require("../models/product");
-const _ = require("lodash");
+import Product from "../models/product";
+import { validateProduct, validateUpdateProduct } from "../validators/product";
+import _ from "lodash";
 
-exports.getAll = async (req, res) => {
+export const getAll = async (req, res) => {
   const products = await Product.find();
 
   const response = {
@@ -27,7 +28,7 @@ exports.getAll = async (req, res) => {
   res.status(200).json(response);
 };
 
-exports.getOne = async (req, res) => {
+export const getOne = async (req, res) => {
   const product = await Product.findById({ _id: req.params.productId }).select(
     "_id name price brand category countInStock description "
   );
@@ -45,8 +46,8 @@ exports.getOne = async (req, res) => {
   }
 };
 
-exports.createProduct = async (req, res) => {
-  const { error } = validate(req.body);
+export const createProduct = async (req, res) => {
+  const { error } = validateProduct(req.body);
 
   if (error) return res.status(400).json({ error: error.details[0].message });
 
@@ -81,7 +82,7 @@ exports.createProduct = async (req, res) => {
   });
 };
 
-exports.updateProduct = async (req, res) => {
+export const updateProduct = async (req, res) => {
   const updateOps = {};
   var propName = [
     "name",
@@ -93,7 +94,6 @@ exports.updateProduct = async (req, res) => {
   ];
   for (const ops of req.body) {
     if (propName.includes(ops.propName) && ops.value) {
-      // validate body
       updateOps[ops.propName] = ops.value;
     } else {
       return res.status(400).json({
@@ -102,6 +102,10 @@ exports.updateProduct = async (req, res) => {
       });
     }
   }
+  // validateProduct body
+  const { error } = validateUpdateProduct(updateOps);
+
+  if (error) return res.status(400).json({ error: error.details[0].message });
 
   const result = await Product.updateOne(
     { _id: req.params.productId },
@@ -113,7 +117,7 @@ exports.updateProduct = async (req, res) => {
       message: "product updated",
       request: {
         type: "GET",
-        url: "http://localhost:8080/api/products/" + result._id,
+        url: "http://localhost:8080/api/products/" + req.params.productId,
       },
     });
   } else {
@@ -121,7 +125,7 @@ exports.updateProduct = async (req, res) => {
   }
 };
 
-exports.deleteProduct = async (req, res) => {
+export const deleteProduct = async (req, res) => {
   const result = await Product.deleteOne({ _id: req.params.productId });
 
   if (result.n) {

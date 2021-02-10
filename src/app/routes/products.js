@@ -1,10 +1,9 @@
 const router = require("express").Router();
+import auth from "../middleware/auth";
+import admin from "../middleware/admin";
+import * as productController from "../controllers/products";
 
-const auth = require("../middleware/auth");
-const admin = require("../middleware/admin")
-const productController = require("../controllers/products");
 
-// Handle incoming GET requests to  /products
 router.get("/", productController.getAll);
 
 router.get("/:productId", productController.getOne);
@@ -15,4 +14,4 @@ router.patch("/:productId", [ auth, admin], productController.updateProduct);
 
 router.delete("/:productId", [ auth, admin], productController.deleteProduct);
 
-module.exports = router;
+export default router;

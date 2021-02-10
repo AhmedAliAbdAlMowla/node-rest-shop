@@ -1,10 +1,10 @@
-const { User, validate } = require("../models/user");
-const bcrypt = require("bcrypt");
-const _ = require("lodash");
-const Joi = require("joi");
+import User from "../models/user";
+import  { validateSignup , validateLogin}  from '../validators/user';
+import bcrypt from "bcrypt";
+import _ from "lodash";
 
 // login
-module.exports.login = async (req, res) => {
+export const login = async (req, res) => {
   const { error } = validateLogin(req.body);
 
   if (error) return res.status(400).json({ error: error.details[0].message });
@@ -24,8 +24,8 @@ module.exports.login = async (req, res) => {
 };
 
 // signup
-module.exports.signup = async (req, res) => {
-  const { error } = validate(req.body);
+export const signup = async (req, res) => {
+  const { error } = validateSignup(req.body);
 
   if (error) return res.status(400).json({ error: error.details[0].message });
 
@@ -39,17 +39,11 @@ module.exports.signup = async (req, res) => {
   await user.save();
 
   const token = user.generateAuthToken();
+  let { _id, name, email, phone } = user;
   res
     .status(201)
     .header("x-auth-token", token)
-    .json({ user: _.pick(user, ["_id", "name", "email", "phone"]) });
+    .json({ user: { _id, name, email, phone } });
 };
 
-// login validate
-const validateLogin = (req) => {
-  const schema = Joi.object({
-    email: Joi.string().max(100).min(5).required().email(),
-    password: Joi.string().max(1024).min(5).required(),
-  });
-  return schema.validate(req);
-};
+
